@@ -1,14 +1,30 @@
 
-# Python cache
-__pycache__/
-*.py[cod]
-
-# Virtual environment
+# Python virtual environments
 .venv/
 venv/
+env/
 
-# Environment variables
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables and secrets
 .env
+.env.*
+!.env.example
 
-# VS Code settings
+# Local personal application data
+data/watchlist.json
+data/report_history.json
+
+# Generated private reports
+data/generated_reports/
+
+# IDE and operating system files
+.idea/
+.DS_Store
+Thumbs.db
+
+# VS Code personal workspace settings
 .vscode/

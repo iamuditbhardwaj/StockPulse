@@ -1,0 +1,11 @@
+date,symbol,company,open,high,low,close,volume
+2026-11-02,DEMO1,Alpha Technologies,100,110,98,108,12000
+2026-11-03,DEMO1,Alpha Technologies,108,115,105,112,15000
+2026-11-04,DEMO1,Alpha Technologies,112,118,109,115,18000
+2026-11-05,DEMO1,Alpha Technologies,115,117,106,109,14000
+2026-11-06,DEMO1,Alpha Technologies,109,120,108,118,20000
+2026-11-02,DEMO2,Future Industries,200,210,195,205,9000
+2026-11-03,DEMO2,Future Industries,205,215,201,212,11000
+2026-11-04,DEMO2,Future Industries,212,218,208,215,13000
+2026-11-05,DEMO2,Future Industries,215,216,205,209,10000
+2026-11-06,DEMO2,Future Industries,209,220,207,218,16000
