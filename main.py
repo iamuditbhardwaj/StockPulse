@@ -1,6 +1,7 @@
 import csv
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from modules.performance_analyzer import calculate_performance
 
 app = FastAPI(title="StockPulse")
 
@@ -76,3 +77,30 @@ def get_stock_history(symbol: str):
         "total_records": len(history),
         "history": history
     }
+
+@app.get("/stocks/{symbol}/performance")
+def get_stock_performance(symbol: str):
+
+    records = load_stock_data()
+
+    closing_prices = []
+
+    for record in records:
+        if record["symbol"].upper() == symbol.upper():
+            closing_prices.append(float(record["close"]))
+
+    if not closing_prices:
+        raise HTTPException(
+            status_code=404,
+            detail="Stock or historical data not found"
+        )
+
+    try:
+        result = calculate_performance(closing_prices)
+        return result
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
