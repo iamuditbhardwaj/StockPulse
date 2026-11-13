@@ -3,6 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from modules.performance_analyzer import calculate_performance
 from modules.trend_analyzer import calculate_trend
+from modules.stock_comparator import compare_stocks
 
 app = FastAPI(title="StockPulse")
 
@@ -132,3 +133,58 @@ def get_stock_trend(symbol: str):
             status_code=400,
             detail=str(error)
         )
+
+@app.get("/compare/{symbol1}/{symbol2}")
+def compare_stock_performance(symbol1: str, symbol2: str):
+
+    # Prevent comparing the same stock
+    if symbol1.upper() == symbol2.upper():
+        raise HTTPException(
+            status_code=400,
+            detail="Please provide two different stock symbols"
+        )
+
+    records = load_stock_data()
+
+    closing_prices1 = []
+    closing_prices2 = []
+
+    # Collect closing prices for both stocks
+    for record in records:
+        current_symbol = record["symbol"].upper()
+
+        if current_symbol == symbol1.upper():
+            closing_prices1.append(float(record["close"]))
+
+        if current_symbol == symbol2.upper():
+            closing_prices2.append(float(record["close"]))
+
+    # Check whether both stocks exist
+    if not closing_prices1:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No historical data found for {symbol1.upper()}"
+        )
+
+    if not closing_prices2:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No historical data found for {symbol2.upper()}"
+        )
+
+    # Calculate and compare performance
+    try:
+        result1 = calculate_performance(closing_prices1)
+        result2 = calculate_performance(closing_prices2)
+
+        comparison = compare_stocks(
+            symbol1.upper(),
+            result1,
+            symbol2.upper(),
+            result2
+        )
+
+        return comparison
+
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
