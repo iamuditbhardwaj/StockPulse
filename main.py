@@ -4,6 +4,7 @@ from fastapi import FastAPI, HTTPException
 from modules.performance_analyzer import calculate_performance
 from modules.trend_analyzer import calculate_trend
 from modules.stock_comparator import compare_stocks
+from modules.watchlist_manager import add_stock, get_watchlist, remove_stock
 
 app = FastAPI(title="StockPulse")
 
@@ -188,3 +189,37 @@ def compare_stock_performance(symbol1: str, symbol2: str):
 
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
+
+@app.get("/watchlist")
+def view_watchlist():
+
+    return {
+        "watchlist": get_watchlist()
+    }
+
+@app.post("/watchlist/{symbol}")
+def add_stock_to_watchlist(symbol: str):
+
+    result = add_stock(symbol)
+
+    if result == "Stock already exists in watchlist":
+        raise HTTPException(status_code=400, detail=result)
+
+    if result == "Stock not found":
+        raise HTTPException(status_code=404, detail=result)
+
+    return {
+        "message": result
+    }
+
+@app.delete("/watchlist/{symbol}")
+def delete_stock_from_watchlist(symbol: str):
+
+    result = remove_stock(symbol)
+
+    if result == "Stock not found in watchlist":
+        raise HTTPException(status_code=404, detail=result)
+
+    return {
+        "message": result
+    }

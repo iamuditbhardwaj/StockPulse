@@ -24,20 +24,3 @@ def compare_stocks(symbol1, result1, symbol2, result2):
         "stock_2_return": return2,
         "better_performer": better_performer
     }
-
-
-# # Testing code
-# demo1_prices = [108, 112, 115, 109, 118]
-# demo2_prices = [205, 212, 215, 209, 218]
-
-# demo1_result = calculate_performance(demo1_prices)
-# demo2_result = calculate_performance(demo2_prices)
-
-# comparison = compare_stocks(
-#     "DEMO1",
-#     demo1_result,
-#     "DEMO2",
-#     demo2_result
-# )
-
-# print(comparison)

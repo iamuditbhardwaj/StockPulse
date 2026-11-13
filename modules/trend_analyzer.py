@@ -30,10 +30,3 @@ def calculate_trend(closing_prices):
         "lowest_price": lowest_price,
         "price_range": price_range
     }
-
-# # Testing
-# closing_prices = []
-
-# result = calculate_trend(closing_prices)
-
-# print(result)
