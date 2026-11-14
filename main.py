@@ -14,12 +14,48 @@ from modules.report_generator import (
 app = FastAPI(title="StockPulse")
 
 DATA_FILE = Path(__file__).parent / "data" / "stocks.csv"
-def load_stock_data():
-    with open(DATA_FILE, "r", newline="", encoding="utf-8") as file:
-        reader = csv.DictReader(file)
-        stock_data = list(reader)
 
-    return stock_data
+def load_stock_data():
+    try:
+        with open(DATA_FILE, "r", newline="", encoding="utf-8") as file:
+            reader = csv.DictReader(file)
+
+            required_columns = [
+                "date", "symbol", "company",
+                "open", "high", "low", "close", "volume"
+            ]
+
+            if not reader.fieldnames or not all(
+                column in reader.fieldnames for column in required_columns
+            ):
+                raise HTTPException(
+                    status_code=500,
+                    detail="Invalid stock data file structure"
+                )
+
+            stock_data = list(reader)
+
+            for record in stock_data:
+                for column in required_columns:
+                    if not record[column] or not record[column].strip():
+                        raise HTTPException(
+                            status_code=500,
+                            detail="Stock data contains incomplete records"
+                        )
+
+        return stock_data
+
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=500,
+            detail="Stock data file not found"
+        )
+
+    except PermissionError:
+        raise HTTPException(
+            status_code=500,
+            detail="Permission denied while reading stock data"
+        )
 
 @app.get("/")
 def home():
@@ -49,6 +85,8 @@ def get_stocks():
 @app.get("/stocks/{symbol}")
 def search_stock(symbol: str):
 
+    symbol = symbol.strip().upper()
+
     if not symbol.strip():
         raise HTTPException(
             status_code=400,
@@ -58,7 +96,7 @@ def search_stock(symbol: str):
     records = load_stock_data()
 
     for record in records:
-        if record["symbol"].upper() == symbol.upper():
+        if record["symbol"].upper() == symbol:
 
             return {
                 "symbol": record["symbol"],
@@ -74,6 +112,8 @@ def search_stock(symbol: str):
 @app.get("/stocks/{symbol}/history")
 def get_stock_history(symbol: str):
 
+    symbol = symbol.strip().upper()
+
     if not symbol.strip():
         raise HTTPException(
             status_code=400,
@@ -85,7 +125,7 @@ def get_stock_history(symbol: str):
     history = []
 
     for record in records:
-        if record["symbol"].upper() == symbol.upper():
+        if record["symbol"].upper() == symbol:
             history.append(record)
 
     if len(history) == 0:
@@ -95,13 +135,15 @@ def get_stock_history(symbol: str):
         )
 
     return {
-        "symbol": symbol.upper(),
+        "symbol": symbol,
         "total_records": len(history),
         "history": history
     }
 
 @app.get("/stocks/{symbol}/performance")
 def get_stock_performance(symbol: str):
+
+    symbol = symbol.strip().upper()
 
     if not symbol.strip():
         raise HTTPException(
@@ -114,7 +156,7 @@ def get_stock_performance(symbol: str):
     closing_prices = []
 
     for record in records:
-        if record["symbol"].upper() == symbol.upper():
+        if record["symbol"].upper() == symbol:
             closing_prices.append(float(record["close"]))
 
     if not closing_prices:
@@ -136,6 +178,8 @@ def get_stock_performance(symbol: str):
 @app.get("/stocks/{symbol}/trend")
 def get_stock_trend(symbol: str):
 
+    symbol = symbol.strip().upper()
+
     if not symbol.strip():
         raise HTTPException(
             status_code=400,
@@ -147,7 +191,7 @@ def get_stock_trend(symbol: str):
     closing_prices = []
 
     for record in records:
-        if record["symbol"].upper() == symbol.upper():
+        if record["symbol"].upper() == symbol:
             closing_prices.append(float(record["close"]))
 
     if not closing_prices:
@@ -169,6 +213,9 @@ def get_stock_trend(symbol: str):
 @app.get("/compare/{symbol1}/{symbol2}")
 def compare_stock_performance(symbol1: str, symbol2: str):
 
+    symbol1 = symbol1.strip().upper()
+    symbol2 = symbol2.strip().upper()
+
     if not symbol1.strip() or not symbol2.strip():
         raise HTTPException(
             status_code=400,
@@ -176,7 +223,7 @@ def compare_stock_performance(symbol1: str, symbol2: str):
         )
 
     # Prevent comparing the same stock
-    if symbol1.upper() == symbol2.upper():
+    if symbol1 == symbol2:
         raise HTTPException(
             status_code=400,
             detail="Please provide two different stock symbols"
@@ -191,10 +238,10 @@ def compare_stock_performance(symbol1: str, symbol2: str):
     for record in records:
         current_symbol = record["symbol"].upper()
 
-        if current_symbol == symbol1.upper():
+        if current_symbol == symbol1:
             closing_prices1.append(float(record["close"]))
 
-        if current_symbol == symbol2.upper():
+        if current_symbol == symbol2:
             closing_prices2.append(float(record["close"]))
 
     # Check whether both stocks exist
@@ -276,6 +323,8 @@ def delete_stock_from_watchlist(symbol: str):
 @app.post("/reports/{symbol}")
 def create_stock_report(symbol: str):
 
+    symbol = symbol.strip().upper()
+
     if not symbol.strip():
         raise HTTPException(
             status_code=400,
@@ -289,7 +338,7 @@ def create_stock_report(symbol: str):
 
     # Collect stock information
     for record in records:
-        if record["symbol"].upper() == symbol.upper():
+        if record["symbol"].upper() == symbol:
 
             company = record["company"]
             closing_prices.append(float(record["close"]))
@@ -304,7 +353,7 @@ def create_stock_report(symbol: str):
     # Generate report
     try:
         report = generate_report(
-            symbol.upper(),
+            symbol,
             company,
             closing_prices
         )
