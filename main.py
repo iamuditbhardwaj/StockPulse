@@ -5,6 +5,11 @@ from modules.performance_analyzer import calculate_performance
 from modules.trend_analyzer import calculate_trend
 from modules.stock_comparator import compare_stocks
 from modules.watchlist_manager import add_stock, get_watchlist, remove_stock
+from modules.report_generator import (
+    generate_report,
+    add_report_to_history,
+    load_report_history
+)
 
 app = FastAPI(title="StockPulse")
 
@@ -223,3 +228,50 @@ def delete_stock_from_watchlist(symbol: str):
     return {
         "message": result
     }
+
+@app.post("/reports/{symbol}")
+def create_stock_report(symbol: str):
+
+    records = load_stock_data()
+
+    closing_prices = []
+    company = None
+
+    # Collect stock information
+    for record in records:
+        if record["symbol"].upper() == symbol.upper():
+
+            company = record["company"]
+            closing_prices.append(float(record["close"]))
+
+    # Check whether stock exists
+    if not closing_prices:
+        raise HTTPException(
+            status_code=404,
+            detail="Stock or historical data not found"
+        )
+
+    # Generate report
+    try:
+        report = generate_report(
+            symbol.upper(),
+            company,
+            closing_prices
+        )
+
+        add_report_to_history(report)
+
+        return report
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+
+@app.get("/reports/history")
+def get_report_history():
+
+    history = load_report_history()
+
+    return history
