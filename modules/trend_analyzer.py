@@ -10,7 +10,7 @@ def calculate_trend(closing_prices):
     highest_price = max(closing_prices)
     lowest_price = min(closing_prices)
 
-    price_range = highest_price - lowest_price
+    price_range = round(highest_price - lowest_price, 2)
 
     # Determine trend
     if ending_price > starting_price:

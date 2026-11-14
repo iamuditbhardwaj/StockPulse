@@ -21,8 +21,16 @@ def load_stock_data():
             reader = csv.DictReader(file)
 
             required_columns = [
-                "date", "symbol", "company",
-                "open", "high", "low", "close", "volume"
+                "date",
+                "symbol",
+                "company",
+                "asset_type",
+                "currency",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume"
             ]
 
             if not reader.fieldnames or not all(
@@ -64,6 +72,7 @@ def home():
         "project": "Stock Market Learning and Analysis"
     }
 
+
 @app.get("/stocks")
 def get_stocks():
 
@@ -77,7 +86,9 @@ def get_stocks():
         if symbol not in unique_stocks:
             unique_stocks[symbol] = {
                 "symbol": symbol,
-                "company": record["company"]
+                "company": record["company"],
+                "asset_type": record["asset_type"],
+                "currency": record["currency"]
             }
 
     return list(unique_stocks.values())
