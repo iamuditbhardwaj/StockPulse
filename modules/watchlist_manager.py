@@ -21,7 +21,10 @@ def save_watchlist(data):
 
 def add_stock(symbol):
 
-    symbol = symbol.upper()
+    if not symbol.strip():
+        return "Stock symbol cannot be empty"
+
+    symbol = symbol.strip().upper()
 
     # Load existing watchlist
     data = load_watchlist()
@@ -62,7 +65,10 @@ def get_watchlist():
 
 def remove_stock(symbol):
 
-    symbol = symbol.upper()
+    if not symbol.strip():
+        return "Stock symbol cannot be empty"
+
+    symbol = symbol.strip().upper()
 
     data = load_watchlist()
 

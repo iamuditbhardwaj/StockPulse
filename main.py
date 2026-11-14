@@ -49,6 +49,12 @@ def get_stocks():
 @app.get("/stocks/{symbol}")
 def search_stock(symbol: str):
 
+    if not symbol.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Stock symbol cannot be empty"
+        )
+
     records = load_stock_data()
 
     for record in records:
@@ -60,12 +66,19 @@ def search_stock(symbol: str):
                 "message": "Stock found successfully"
             }
 
-    return {
-        "message": "Stock not found"
-    }
+    raise HTTPException(
+    status_code=404,
+    detail="Stock not found"
+    )
 
 @app.get("/stocks/{symbol}/history")
 def get_stock_history(symbol: str):
+
+    if not symbol.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Stock symbol cannot be empty"
+        )
 
     records = load_stock_data()
 
@@ -76,9 +89,10 @@ def get_stock_history(symbol: str):
             history.append(record)
 
     if len(history) == 0:
-        return {
-            "message": "No historical data found for this stock"
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="No historical data found for this stock"
+        )
 
     return {
         "symbol": symbol.upper(),
@@ -88,6 +102,12 @@ def get_stock_history(symbol: str):
 
 @app.get("/stocks/{symbol}/performance")
 def get_stock_performance(symbol: str):
+
+    if not symbol.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Stock symbol cannot be empty"
+        )
 
     records = load_stock_data()
 
@@ -116,6 +136,12 @@ def get_stock_performance(symbol: str):
 @app.get("/stocks/{symbol}/trend")
 def get_stock_trend(symbol: str):
 
+    if not symbol.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Stock symbol cannot be empty"
+        )
+
     records = load_stock_data()
 
     closing_prices = []
@@ -142,6 +168,12 @@ def get_stock_trend(symbol: str):
 
 @app.get("/compare/{symbol1}/{symbol2}")
 def compare_stock_performance(symbol1: str, symbol2: str):
+
+    if not symbol1.strip() or not symbol2.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Both stock symbols are required"
+        )
 
     # Prevent comparing the same stock
     if symbol1.upper() == symbol2.upper():
@@ -207,6 +239,12 @@ def add_stock_to_watchlist(symbol: str):
 
     result = add_stock(symbol)
 
+    if result == "Stock symbol cannot be empty":
+        raise HTTPException(
+            status_code=400,
+            detail=result
+        )
+
     if result == "Stock already exists in watchlist":
         raise HTTPException(status_code=400, detail=result)
 
@@ -222,6 +260,12 @@ def delete_stock_from_watchlist(symbol: str):
 
     result = remove_stock(symbol)
 
+    if result == "Stock symbol cannot be empty":
+        raise HTTPException(
+            status_code=400,
+            detail=result
+        )
+
     if result == "Stock not found in watchlist":
         raise HTTPException(status_code=404, detail=result)
 
@@ -231,6 +275,12 @@ def delete_stock_from_watchlist(symbol: str):
 
 @app.post("/reports/{symbol}")
 def create_stock_report(symbol: str):
+
+    if not symbol.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Stock symbol cannot be empty"
+        )
 
     records = load_stock_data()
 
