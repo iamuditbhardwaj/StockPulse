@@ -51,6 +51,18 @@ def load_stock_data():
                             detail="Stock data contains incomplete records"
                         )
 
+                try:
+                    for column in ["open", "high", "low", "close"]:
+                        float(record[column])
+
+                    int(record["volume"])
+
+                except ValueError:
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Stock data contains invalid numerical values"
+                    )
+
         return stock_data
 
     except FileNotFoundError:
