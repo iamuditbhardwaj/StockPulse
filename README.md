@@ -21,17 +21,11 @@ StockPulse currently supports seven market instruments:
 ## Features
 
 1. **Stock Explorer:** View available market instruments, their categories, currencies and historical price data.
-
 2. **Performance Analyzer:** Calculate starting price, ending price, highest price, lowest price, average price, price change and percentage return.
-
 3. **Trend Analyzer:** Identify whether an instrument shows an uptrend, downtrend or sideways trend.
-
 4. **Stock Comparator:** Compare the performance of two instruments and identify the better performer based on percentage return.
-
 5. **Watchlist Management:** Add instruments to a personal watchlist, view saved instruments and remove them.
-
 6. **Report Generator:** Generate analysis reports containing performance and trend information.
-
 7. **Report History:** Save and retrieve previously generated analysis reports.
 
 ## Technologies Used
@@ -48,6 +42,8 @@ StockPulse currently supports seven market instruments:
 ## Installation and Setup
 
 Follow these steps to run StockPulse locally.
+
+**Important:** Run all commands from the root `StockPulse` project directory.
 
 ### 1. Clone the Repository
 
@@ -100,7 +96,7 @@ Run this command whenever you want to manually refresh the historical dataset.
 ### 7. Run the Application
 
 ```bash
-fastapi dev main.py
+python -m fastapi dev main.py
 ```
 
 ### 8. Open the API Documentation

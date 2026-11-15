@@ -28,3 +28,6 @@ Thumbs.db
 
 # VS Code personal workspace settings
 .vscode/
+
+# Project screenshots (kept locally, not committed to Git)
+Screenshots/
