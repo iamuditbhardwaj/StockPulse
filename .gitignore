@@ -31,3 +31,13 @@ Thumbs.db
 
 # Project screenshots (kept locally, not committed to Git)
 Screenshots/
+
+# Frontend source (maintained separately)
+frontend/
+
+# Additional Python-generated files
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/

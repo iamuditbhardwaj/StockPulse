@@ -1,17 +1,44 @@
 import csv
+from pydantic import BaseModel
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from modules.performance_analyzer import calculate_performance
 from modules.trend_analyzer import calculate_trend
 from modules.stock_comparator import compare_stocks
-from modules.watchlist_manager import add_stock, get_watchlist, remove_stock
+from modules.watchlist_manager import (
+    add_stock,
+    get_watchlist,
+    remove_stock,
+    get_watchlists,
+    get_watchlist_by_id,
+    create_watchlist,
+    set_active_watchlist,
+    delete_watchlist,
+    add_stock_to_watchlist,
+    remove_stock_from_watchlist
+)
 from modules.report_generator import (
     generate_report,
     add_report_to_history,
     load_report_history
 )
+from fastapi.responses import StreamingResponse
+
+from modules.report_exporter import (
+    generate_pdf_report,
+    generate_csv_report
+)
 
 app = FastAPI(title="StockPulse")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 DATA_FILE = Path(__file__).parent / "data" / "stocks.csv"
 
@@ -297,51 +324,118 @@ def compare_stock_performance(symbol1: str, symbol2: str):
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
 
-@app.get("/watchlist")
-def view_watchlist():
 
-    return {
-        "watchlist": get_watchlist()
-    }
+class WatchlistCreate(BaseModel):
+    name: str
 
-@app.post("/watchlist/{symbol}")
-def add_stock_to_watchlist(symbol: str):
 
-    result = add_stock(symbol)
+@app.get("/watchlists")
+def view_all_watchlists():
+    return get_watchlists()
 
-    if result == "Stock symbol cannot be empty":
-        raise HTTPException(
-            status_code=400,
-            detail=result
-        )
 
-    if result == "Stock already exists in watchlist":
-        raise HTTPException(status_code=400, detail=result)
+@app.post("/watchlists")
+def create_new_watchlist(request: WatchlistCreate):
+    watchlist, message = create_watchlist(request.name)
 
-    if result == "Stock not found":
+    if watchlist is None:
+        raise HTTPException(status_code=400, detail=message)
+
+    return {"message": message, "watchlist": watchlist}
+
+
+@app.get("/watchlists/{watchlist_id}")
+def view_selected_watchlist(watchlist_id: str):
+    watchlist = get_watchlist_by_id(watchlist_id)
+
+    if watchlist is None:
+        raise HTTPException(status_code=404, detail="Watchlist not found")
+
+    return watchlist
+
+
+@app.put("/watchlists/{watchlist_id}/active")
+def activate_watchlist(watchlist_id: str):
+    if not set_active_watchlist(watchlist_id):
+        raise HTTPException(status_code=404, detail="Watchlist not found")
+
+    return {"message": "Active watchlist updated successfully"}
+
+
+@app.delete("/watchlists/{watchlist_id}")
+def delete_saved_watchlist(watchlist_id: str):
+    result = delete_watchlist(watchlist_id)
+
+    if result == "Watchlist not found":
         raise HTTPException(status_code=404, detail=result)
 
-    return {
-        "message": result
-    }
+    if result == "At least one watchlist must remain":
+        raise HTTPException(status_code=400, detail=result)
+
+    return {"message": result}
+
+
+@app.post("/watchlists/{watchlist_id}/stocks/{symbol}")
+def add_stock_to_selected_watchlist(watchlist_id: str, symbol: str):
+    result = add_stock_to_watchlist(watchlist_id, symbol)
+
+    if result in [
+        "Stock symbol cannot be empty",
+        "Stock already exists in watchlist"
+    ]:
+        raise HTTPException(status_code=400, detail=result)
+
+    if result in ["Stock not found", "Watchlist not found"]:
+        raise HTTPException(status_code=404, detail=result)
+
+    return {"message": result}
+
+
+@app.delete("/watchlists/{watchlist_id}/stocks/{symbol}")
+def remove_stock_from_selected_watchlist(watchlist_id: str, symbol: str):
+    result = remove_stock_from_watchlist(watchlist_id, symbol)
+
+    if result == "Stock symbol cannot be empty":
+        raise HTTPException(status_code=400, detail=result)
+
+    if result in ["Stock not found in watchlist", "Watchlist not found"]:
+        raise HTTPException(status_code=404, detail=result)
+
+    return {"message": result}
+
+@app.get("/watchlist")
+def view_watchlist():
+    return {"watchlist": get_watchlist()}
+
+
+@app.post("/watchlist/{symbol}")
+def add_stock_to_default_watchlist(symbol: str):
+    result = add_stock(symbol)
+
+    if result in [
+        "Stock symbol cannot be empty",
+        "Stock already exists in watchlist"
+    ]:
+        raise HTTPException(status_code=400, detail=result)
+
+    if result in ["Stock not found", "Watchlist not found"]:
+        raise HTTPException(status_code=404, detail=result)
+
+    return {"message": result}
+
 
 @app.delete("/watchlist/{symbol}")
-def delete_stock_from_watchlist(symbol: str):
-
+def delete_stock_from_default_watchlist(symbol: str):
     result = remove_stock(symbol)
 
     if result == "Stock symbol cannot be empty":
-        raise HTTPException(
-            status_code=400,
-            detail=result
-        )
+        raise HTTPException(status_code=400, detail=result)
 
-    if result == "Stock not found in watchlist":
+    if result in ["Stock not found in watchlist", "Watchlist not found"]:
         raise HTTPException(status_code=404, detail=result)
 
-    return {
-        "message": result
-    }
+    return {"message": result}
+
 
 @app.post("/reports/{symbol}")
 def create_stock_report(symbol: str):
@@ -397,3 +491,63 @@ def get_report_history():
     history = load_report_history()
 
     return history
+
+@app.get("/reports/{symbol}/download")
+def download_stock_report(symbol: str, format: str = "pdf"):
+
+    symbol = symbol.strip().upper()
+
+    if format.lower() not in ["pdf", "csv"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported format. Choose pdf or csv."
+        )
+
+    # Load saved reports
+    data = load_report_history()
+    reports = data.get("reports", [])
+
+    # Find reports for the requested symbol
+    matching_reports = [
+        report for report in reports
+        if report.get("symbol", "").upper() == symbol
+    ]
+
+    if not matching_reports:
+        raise HTTPException(
+            status_code=404,
+            detail="No saved report found for this stock symbol"
+        )
+
+    # Select the latest saved report
+    report = matching_reports[-1]
+
+    # Prepare a safe filename
+    safe_symbol = "".join(
+        character for character in symbol
+        if character.isalnum() or character in "._-"
+    )
+
+    if format.lower() == "pdf":
+
+        file_buffer = generate_pdf_report(report)
+
+        return StreamingResponse(
+            file_buffer,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition":
+                    f'attachment; filename="{safe_symbol}_report.pdf"'
+            }
+        )
+
+    file_buffer = generate_csv_report(report)
+
+    return StreamingResponse(
+        file_buffer,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition":
+                f'attachment; filename="{safe_symbol}_report.csv"'
+        }
+    )
