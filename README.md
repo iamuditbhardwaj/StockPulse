@@ -4,9 +4,9 @@
 
 StockPulse is a Python-based stock market learning and analysis application built using FastAPI.
 
-It allows users to explore historical market data, analyze price performance and trends, compare market instruments, manage multiple watchlists and generate downloadable stock analysis reports.
+It allows users to explore historical market data, analyze price performance and trends, compare market instruments, manage multiple watchlists, generate downloadable stock analysis reports and track educational learning progress.
 
-The application retrieves one year of daily historical market data using the `yfinance` Python library. The downloaded data is stored locally in a CSV file, while JSON files are used for persistent storage of watchlist information and generated report history.
+The application retrieves one year of daily historical market data using the `yfinance` Python library. The downloaded data is stored locally in a CSV file, while JSON files are used for persistent storage of watchlist information, generated report history and Learning Hub progress.
 
 StockPulse currently supports seven market instruments:
 
@@ -38,7 +38,7 @@ StockPulse currently supports seven market instruments:
 
 9. **Historical Data Management:** Download and locally store historical market data for the supported instruments.
 
-The complete StockPulse application also includes a React-based frontend with interactive charts and analysis interfaces. The frontend source code is maintained separately and is not included in this backend-only GitHub repository.
+10. **Learning Hub Progress Tracking:** Track completed lessons, quiz scores and flashcard review progress. Learning progress is saved persistently using JSON storage.
 
 ## Technologies Used
 
@@ -48,7 +48,7 @@ The complete StockPulse application also includes a React-based frontend with in
 - **Pandas:** Supports historical market data processing.
 - **ReportLab:** Generates downloadable PDF reports.
 - **CSV:** Stores downloaded historical market data and supports CSV report exports.
-- **JSON:** Stores watchlist information and generated report history.
+- **JSON:** Stores watchlist information, generated report history and Learning Hub progress.
 - **Uvicorn:** Runs the FastAPI application server.
 - **Git and GitHub:** Version control and project hosting.
 - **Visual Studio Code:** Development environment.
@@ -117,7 +117,7 @@ python -m uvicorn main:app --reload
 
 ### 8. Open the API Documentation
 
-Visit the following address in your browser:
+Visit:
 
 [Open API Documentation](http://127.0.0.1:8000/docs)
 
@@ -147,7 +147,7 @@ StockPulse/
 └── README.md
 ```
 
-**Note:** `stocks.csv` contains the historical market dataset. The application creates or updates local JSON files for watchlist information and report history as required. These locally generated application files are not included in the GitHub repository.
+**Note:** `stocks.csv` contains the historical market dataset. The application creates or updates local JSON files for watchlist information, report history and learning progress as required. These locally generated application files are not included in the GitHub repository.
 
 ## API Endpoints
 
@@ -191,14 +191,23 @@ StockPulse provides the following API endpoints:
 |---|---|---|
 | Generate Analysis Report | POST | `/reports/{symbol}` |
 | View Report History | GET | `/reports/history` |
-| Download Report | GET | `/reports/{symbol}/download?format=pdf` |
-| Download Report | GET | `/reports/{symbol}/download?format=csv` |
+| Download PDF Report | GET | `/reports/{symbol}/download?format=pdf` |
+| Download CSV Report | GET | `/reports/{symbol}/download?format=csv` |
+
+### Learning Hub Progress Management
+
+| Feature | Method | Endpoint |
+|---|---|---|
+| Retrieve Learning Progress | GET | `/learning-progress` |
+| Save or Update Learning Progress | PUT | `/learning-progress` |
+
+The Learning Hub progress endpoint stores completed lessons, quiz scores and flashcard review information in a local JSON file.
 
 Interactive API documentation is available at `/docs` when the application is running.
 
 ## Testing and Validation
 
-StockPulse was tested using the interactive Swagger UI provided by FastAPI at `/docs`, along with the application's frontend interfaces.
+StockPulse was tested using the interactive Swagger UI provided by FastAPI at `/docs`.
 
 The following test cases were performed:
 
@@ -221,6 +230,11 @@ The following test cases were performed:
 | 15 | View report history | Retrieve previously generated reports | Passed |
 | 16 | Restart the application | Retain saved watchlist and report history data | Passed |
 | 17 | Submit an unknown or blank stock symbol | Return an appropriate error response | Passed |
+| 18 | Retrieve Learning Hub progress | Return saved learning progress | Passed |
+| 19 | Update lesson completion status | Save completed lesson information | Passed |
+| 20 | Save quiz scores | Store quiz results successfully | Passed |
+| 21 | Update flashcard review progress | Save flashcard review information | Passed |
+| 22 | Reset Learning Hub progress | Clear saved lesson, quiz and flashcard progress | Passed |
 
 All listed test cases produced the expected results during project testing.
 
@@ -232,14 +246,12 @@ All listed test cases produced the expected results during project testing.
 - Historical data availability depends on the external data provider and the `yfinance` library.
 - Gold and Silver Futures data represents international COMEX futures quoted in USD, while NIFTY 50 is measured in index points.
 - Trend analysis uses a simplified comparison of historical starting and ending prices.
-- The GitHub repository contains the Python backend; the React frontend is maintained separately.
 - StockPulse is an educational project and does not provide financial or investment advice.
 
 ## Future Improvements
 
 The following improvements can be considered for future versions of StockPulse:
 
-- Include the React frontend source code in the main repository.
 - Explore integration of a reliable live-market data source.
 - Improve trend and volatility analysis using additional analytical methods.
 - Expand historical data coverage and support additional stocks, indices and commodities.
