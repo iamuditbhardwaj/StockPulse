@@ -1,4 +1,5 @@
 import csv
+import json
 from pydantic import BaseModel
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
@@ -41,6 +42,10 @@ app.add_middleware(
 )
 
 DATA_FILE = Path(__file__).parent / "data" / "stocks.csv"
+
+LEARNING_PROGRESS_FILE = (
+    Path(__file__).parent / "data" / "learning_progress.json"
+)
 
 def load_stock_data():
     try:
@@ -328,6 +333,11 @@ def compare_stock_performance(symbol1: str, symbol2: str):
 class WatchlistCreate(BaseModel):
     name: str
 
+class LearningProgress(BaseModel):
+    lesson_completed: list[int] = []
+    quiz_scores: dict[str, int] = {}
+    flashcards: dict[str, list[int]] = {}
+
 
 @app.get("/watchlists")
 def view_all_watchlists():
@@ -551,3 +561,46 @@ def download_stock_report(symbol: str, format: str = "pdf"):
                 f'attachment; filename="{safe_symbol}_report.csv"'
         }
     )
+
+@app.get("/learning-progress")
+def get_learning_progress():
+
+    if not LEARNING_PROGRESS_FILE.exists():
+        return {
+            "lesson_completed": [],
+            "quiz_scores": {},
+            "flashcards": {}
+        }
+
+    try:
+        with open(LEARNING_PROGRESS_FILE, "r", encoding="utf-8") as file:
+            return json.load(file)
+
+    except (json.JSONDecodeError, OSError):
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to read learning progress"
+        )
+
+
+@app.put("/learning-progress")
+def save_learning_progress(progress: LearningProgress):
+
+    try:
+        LEARNING_PROGRESS_FILE.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+        with open(LEARNING_PROGRESS_FILE, "w", encoding="utf-8") as file:
+            json.dump(progress.dict(), file, indent=4)
+
+        return {
+            "message": "Learning progress saved successfully"
+        }
+
+    except OSError:
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to save learning progress"
+        )

@@ -17,6 +17,7 @@ __pycache__/
 # Local personal application data
 data/watchlist.json
 data/report_history.json
+data/learning_progress.json
 
 # Generated private reports
 data/generated_reports/
@@ -41,3 +42,4 @@ frontend/
 .ruff_cache/
 .coverage
 htmlcov/
+
